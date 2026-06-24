@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>What Song Is Your Life Right Now?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bitter:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0D0D;
+    --bg-deep:#060509;
+    --accent:#7C3AED;
+    --accent-bright:#a78bfa;
+    --accent-soft:rgba(124,58,237,.35);
+    --text:#EDEAF6;
+    --text-dim:#9C95B5;
+    --card-bg:#15121f;
+    --border:rgba(124,58,237,.28);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(124,58,237,.12), transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(124,58,237,.08), transparent 50%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Mono', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 18px 60px;
+  }
+  .wrap{
+    width:100%;
+    max-width:560px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:28px;
+    position:relative;
+  }
+  h1{
+    font-family:'Bitter', serif;
+    font-size:clamp(1.5rem, 5vw, 2.1rem);
+    font-weight:800;
+    line-height:1.25;
+    margin:0 0 8px;
+    color:var(--text);
+    text-shadow:0 0 24px var(--accent-soft);
+  }
+  header p.tag{
+    color:var(--text-dim);
+    font-size:.85rem;
+    margin:0;
+    letter-spacing:.03em;
+  }
+  .settings-toggle{
+    position:absolute;
+    top:-6px;
+    right:0;
+    background:none;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    border-radius:8px;
+    width:34px;
+    height:34px;
+    font-size:1rem;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .settings-toggle:hover{ color:var(--accent-bright); border-color:var(--accent); }
+
+  .settings-panel{
+    display:none;
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:20px;
+    font-size:.78rem;
+    color:var(--text-dim);
+  }
+  .settings-panel.open{display:block;}
+  .settings-panel label{display:block; margin-bottom:6px; color:var(--text);}
+  .settings-panel input{
+    width:100%;
+    background:var(--bg-deep);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:9px 10px;
+    font-family:inherit;
+    font-size:.8rem;
+    margin-bottom:8px;
+  }
+  .settings-panel input:focus{ outline:none; border-color:var(--accent); }
+  .settings-panel .hint{ line-height:1.5; }
+
+  textarea{
+    width:100%;
+    min-height:108px;
+    resize:vertical;
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:14px;
+    padding:16px;
+    font-family:inherit;
+    font-size:.95rem;
+    line-height:1.5;
+    margin-bottom:16px;
+  }
+  textarea::placeholder{ color:var(--text-dim); }
+  textarea:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+
+  .ask-btn{
+    display:block;
+    width:100%;
+    background:linear-gradient(135deg, var(--accent), #5b21b6);
+    color:#fff;
+    border:none;
+    border-radius:14px;
+    padding:15px;
+    font-family:'Bitter', serif;
+    font-weight:700;
+    font-size:1.02rem;
+    letter-spacing:.02em;
+    cursor:pointer;
+    box-shadow:0 6px 24px var(--accent-soft);
+    transition:transform .12s, box-shadow .12s;
+  }
+  .ask-btn:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 8px 28px var(--accent-soft); }
+  .ask-btn:active:not(:disabled){ transform:translateY(0); }
+  .ask-btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+  .error-msg{
+    display:none;
+    margin-top:14px;
+    background:rgba(220,38,38,.1);
+    border:1px solid rgba(220,38,38,.4);
+    color:#fca5a5;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:.82rem;
+    line-height:1.5;
+  }
+  .error-msg.show{display:block;}
+
+  /* vinyl */
+  .vinyl-stage{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    margin:34px 0 10px;
+  }
+  .vinyl-stage.show{display:flex;}
+  .vinyl{
+    width:108px;
+    height:108px;
+    border-radius:50%;
+    background:
+      repeating-radial-gradient(circle, #1c1828 0px, #1c1828 2px, #100d18 3px, #100d18 5px);
+    border:2px solid var(--border);
+    position:relative;
+    animation:spin 1.1s linear infinite;
+    box-shadow:0 0 30px var(--accent-soft);
+  }
+  .vinyl::after{
+    content:'';
+    position:absolute;
+    top:50%; left:50%;
+    width:34px; height:34px;
+    background:var(--accent);
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 14px var(--accent-bright);
+  }
+  .vinyl::before{
+    content:'';
+    position:absolute;
+    top:50%; left:50%;
+    width:6px; height:6px;
+    background:var(--bg-deep);
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    z-index:2;
+  }
+  @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .vinyl-status{ color:var(--text-dim); font-size:.8rem; letter-spacing:.04em; }
+
+  /* result */
+  .result{
+    display:none;
+    margin-top:28px;
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px 22px 26px;
+    animation:rise .35s ease;
+  }
+  .result.show{display:block;}
+  @keyframes rise{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .monologue{
+    font-style:italic;
+    color:#d9d4ec;
+    font-size:.92rem;
+    line-height:1.65;
+    margin:0 0 18px;
+    white-space:pre-wrap;
+  }
+  .song-block{
+    text-align:center;
+    padding:18px 10px;
+    border-top:1px dashed var(--border);
+    border-bottom:1px dashed var(--border);
+    margin-bottom:18px;
+  }
+  .song-title{
+    font-family:'Bitter', serif;
+    font-weight:800;
+    font-size:clamp(1.2rem, 5vw, 1.6rem);
+    color:var(--accent-bright);
+    text-shadow:0 0 18px var(--accent-soft);
+    margin:0 0 4px;
+  }
+  .song-artist{
+    color:var(--text-dim);
+    font-size:.85rem;
+    letter-spacing:.03em;
+  }
+  .actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+  }
+  .actions a, .actions button{
+    flex:1 1 auto;
+    min-width:110px;
+    text-align:center;
+    background:var(--bg-deep);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:10px;
+    padding:10px 12px;
+    font-family:inherit;
+    font-size:.78rem;
+    text-decoration:none;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .actions a:hover, .actions button:hover{ border-color:var(--accent); color:var(--accent-bright); }
+  .reroll{ width:100%; margin-top:10px; background:transparent; border:1px solid var(--border); color:var(--text-dim); border-radius:10px; padding:10px; font-family:inherit; font-size:.8rem; cursor:pointer; }
+  .reroll:hover{ color:var(--accent-bright); border-color:var(--accent); }
+
+  .toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--accent);
+    color:#fff;
+    padding:9px 18px;
+    border-radius:30px;
+    font-size:.78rem;
+    opacity:0;
+    pointer-events:none;
+    transition:.2s;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  footer{
+    margin-top:36px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:.7rem;
+    opacity:.7;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <button class="settings-toggle" id="settingsToggle" title="API key settings" aria-label="Settings">⚙</button>
+      <h1>🎵 What Song Is Your Life Right Now?</h1>
+      <p class="tag">Tell the DJ how it's going. Get one song. No skipping.</p>
+    </header>
+
+    <div class="settings-panel" id="settingsPanel">
+      <label for="apiKey">Anthropic API key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+      <p class="hint">Stored only in this browser (localStorage) and sent directly to Anthropic's API — never anywhere else. Don't use this on a public/shared computer or deploy it as a public site with your key baked in.</p>
+    </div>
+
+    <textarea id="vibeInput" placeholder="Tell the DJ how life is going right now... (a sentence or two is plenty)"></textarea>
+
+    <button class="ask-btn" id="askBtn">Ask the DJ 🎙️</button>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="vinyl-stage" id="vinylStage">
+      <div class="vinyl"></div>
+      <div class="vinyl-status" id="vinylStatus">spinning up the request...</div>
+    </div>
+
+    <div class="result" id="result">
+      <p class="monologue" id="monologue"></p>
+      <div class="song-block">
+        <p class="song-title" id="songTitle"></p>
+        <p class="song-artist" id="songArtist"></p>
+      </div>
+      <div class="actions">
+        <a id="youtubeLink" href="#" target="_blank" rel="noopener">▶ YouTube</a>
+        <a id="spotifyLink" href="#" target="_blank" rel="noopener">Spotify</a>
+        <button id="copyBtn">Copy</button>
+      </div>
+      <button class="reroll" id="rerollBtn">🔁 Re-roll — same vibe, new song</button>
+    </div>
+
+    <footer>vibe-coded · single file · no backend</footer>
+  </div>
+
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+(function(){
+  const DJ_SYSTEM_PROMPT = `You are a legendary late-night radio DJ with a gift for finding the perfect song
+for any human moment. When someone describes their situation, you dramatically
+announce ONE specific song — real artist, real title — with a 3-4 sentence poetic
+radio monologue about why it is their soundtrack right now. You speak in a warm,
+cinematic, slightly theatrical voice. Only recommend real, well-known, findable songs.
+
+End every response on a new line with exactly:
+🎵 [Artist] — [Song Title]`;
+
+  const els = {
+    settingsToggle: document.getElementById('settingsToggle'),
+    settingsPanel: document.getElementById('settingsPanel'),
+    apiKey: document.getElementById('apiKey'),
+    vibeInput: document.getElementById('vibeInput'),
+    askBtn: document.getElementById('askBtn'),
+    errorMsg: document.getElementById('errorMsg'),
+    vinylStage: document.getElementById('vinylStage'),
+    vinylStatus: document.getElementById('vinylStatus'),
+    result: document.getElementById('result'),
+    monologue: document.getElementById('monologue'),
+    songTitle: document.getElementById('songTitle'),
+    songArtist: document.getElementById('songArtist'),
+    youtubeLink: document.getElementById('youtubeLink'),
+    spotifyLink: document.getElementById('spotifyLink'),
+    copyBtn: document.getElementById('copyBtn'),
+    rerollBtn: document.getElementById('rerollBtn'),
+    toast: document.getElementById('toast'),
+  };
+
+  const STATUS_LINES = [
+    'spinning up the request...',
+    'cueing the next track...',
+    'tuning the dial...',
+    'the DJ is thinking...',
+  ];
+
+  let lastResultText = '';
+  let previousSongs = [];
+
+  // --- settings / API key ---
+  const savedKey = localStorage.getItem('ws_api_key');
+  if (savedKey) els.apiKey.value = savedKey;
+
+  els.settingsToggle.addEventListener('click', () => {
+    els.settingsPanel.classList.toggle('open');
+  });
+  els.apiKey.addEventListener('change', () => {
+    localStorage.setItem('ws_api_key', els.apiKey.value.trim());
+  });
+
+  function showError(msg){
+    els.errorMsg.textContent = msg;
+    els.errorMsg.classList.add('show');
+  }
+  function clearError(){
+    els.errorMsg.classList.remove('show');
+    els.errorMsg.textContent = '';
+  }
+
+  function setLoading(isLoading){
+    els.askBtn.disabled = isLoading;
+    els.rerollBtn.disabled = isLoading;
+    if (isLoading){
+      els.vinylStatus.textContent = STATUS_LINES[Math.floor(Math.random()*STATUS_LINES.length)];
+      els.vinylStage.classList.add('show');
+    } else {
+      els.vinylStage.classList.remove('show');
+    }
+  }
+
+  // --- song parsing ---
+  // Matches a trailing line like: 🎵 Artist — Title  (em dash, en dash, or hyphen)
+  function parseSong(fullText){
+    const lines = fullText.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    let songLineIdx = -1;
+    for (let i = lines.length - 1; i >= 0; i--){
+      if (lines[i].includes('🎵')) { songLineIdx = i; break; }
+    }
+    if (songLineIdx === -1) return null;
+
+    const songLine = lines[songLineIdx].replace('🎵', '').trim();
+    const match = songLine.match(/^(.+?)\s*[—–-]\s*(.+)$/);
+    if (!match) return null;
+
+    const monologueLines = lines.slice(0, songLineIdx);
+    return {
+      artist: match[1].trim(),
+      title: match[2].trim(),
+      monologue: monologueLines.join('\n').trim() || fullText.trim(),
+    };
+  }
+
+  function buildLinks(artist, title){
+    const q = encodeURIComponent(`${artist} ${title}`);
+    return {
+      youtube: `https://www.youtube.com/results?search_query=${q}`,
+      spotify: `https://open.spotify.com/search/${q}`,
+    };
+  }
+
+  async function callDJ(vibeText, avoidList){
+    const apiKey = els.apiKey.value.trim();
+    if (!apiKey){
+      els.settingsPanel.classList.add('open');
+      throw new Error('Add your Anthropic API key above first (⚙ in the top right).');
+    }
+
+    let userContent = vibeText;
+    if (avoidList && avoidList.length){
+      userContent += `\n\n(Re-roll: pick a different song than these previous picks — ${avoidList.join('; ')}.)`;
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: DJ_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userContent }],
+      }),
+    });
+
+    if (!response.ok){
+      const body = await response.json().catch(() => ({}));
+      const apiMsg = body && body.error && body.error.message;
+      throw new Error(apiMsg || `The DJ booth went quiet (HTTP ${response.status}). Check your API key and try again.`);
+    }
+
+    const data = await response.json();
+    const text = (data.content || []).map(b => b.text || '').join('').trim();
+    if (!text) throw new Error('The DJ came back with dead air. Try again.');
+    return text;
+  }
+
+  function renderResult(fullText){
+    const parsed = parseSong(fullText);
+    lastResultText = fullText;
+
+    if (!parsed){
+      els.monologue.textContent = fullText;
+      els.songTitle.textContent = '';
+      els.songArtist.textContent = '';
+      els.youtubeLink.style.display = 'none';
+      els.spotifyLink.style.display = 'none';
+      els.result.classList.add('show');
+      return;
+    }
+
+    previousSongs.push(`${parsed.artist} — ${parsed.title}`);
+    els.monologue.textContent = parsed.monologue;
+    els.songTitle.textContent = parsed.title;
+    els.songArtist.textContent = parsed.artist;
+
+    const links = buildLinks(parsed.artist, parsed.title);
+    els.youtubeLink.href = links.youtube;
+    els.spotifyLink.href = links.spotify;
+    els.youtubeLink.style.display = '';
+    els.spotifyLink.style.display = '';
+
+    els.result.classList.add('show');
+  }
+
+  async function runQuery({ isReroll } = {}){
+    const vibeText = els.vibeInput.value.trim();
+    if (!vibeText){
+      showError('Tell the DJ something first — even one sentence works.');
+      return;
+    }
+    clearError();
+    if (!isReroll) previousSongs = [];
+    setLoading(true);
+    els.result.classList.remove('show');
+
+    try {
+      const fullText = await callDJ(vibeText, isReroll ? previousSongs : null);
+      renderResult(fullText);
+    } catch (err){
+      showError(err.message || 'Something went static. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  els.askBtn.addEventListener('click', () => runQuery({ isReroll: false }));
+  els.rerollBtn.addEventListener('click', () => runQuery({ isReroll: true }));
+
+  els.vibeInput.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){
+      runQuery({ isReroll: false });
+    }
+  });
+
+  els.copyBtn.addEventListener('click', async () => {
+    const text = `${els.songTitle.textContent ? '🎵 ' + els.songArtist.textContent + ' — ' + els.songTitle.textContent + '\n\n' : ''}${els.monologue.textContent}`;
+    try {
+      await navigator.clipboard.writeText(text || lastResultText);
+      els.toast.classList.add('show');
+      setTimeout(() => els.toast.classList.remove('show'), 1600);
+    } catch (e){
+      showError('Could not copy — your browser blocked clipboard access.');
+    }
+  });
+})();
+</script>
+</body>
+</html>
