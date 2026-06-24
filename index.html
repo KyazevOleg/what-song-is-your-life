@@ -286,9 +286,16 @@
 <body>
   <div class="wrap">
     <header>
+      <button class="settings-toggle" id="settingsToggle" title="API key settings" aria-label="Settings">⚙</button>
       <h1>🎵 What Song Is Your Life Right Now?</h1>
       <p class="tag">Tell the DJ how it's going. Get one song. No skipping.</p>
     </header>
+
+    <div class="settings-panel" id="settingsPanel">
+      <label for="apiKey">Anthropic API key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+      <p class="hint">Stored only in this browser (localStorage) and sent directly to Anthropic's API — never anywhere else. Don't use this on a public/shared computer or deploy it as a public site with your key baked in.</p>
+    </div>
 
     <textarea id="vibeInput" placeholder="Tell the DJ how life is going right now... (a sentence or two is plenty)"></textarea>
 
@@ -331,6 +338,9 @@ End every response on a new line with exactly:
 🎵 [Artist] — [Song Title]`;
 
   const els = {
+    settingsToggle: document.getElementById('settingsToggle'),
+    settingsPanel: document.getElementById('settingsPanel'),
+    apiKey: document.getElementById('apiKey'),
     vibeInput: document.getElementById('vibeInput'),
     askBtn: document.getElementById('askBtn'),
     errorMsg: document.getElementById('errorMsg'),
@@ -357,6 +367,16 @@ End every response on a new line with exactly:
   let lastResultText = '';
   let previousSongs = [];
 
+  // --- settings / API key ---
+  const savedKey = localStorage.getItem('ws_api_key');
+  if (savedKey) els.apiKey.value = savedKey;
+
+  els.settingsToggle.addEventListener('click', () => {
+    els.settingsPanel.classList.toggle('open');
+  });
+  els.apiKey.addEventListener('change', () => {
+    localStorage.setItem('ws_api_key', els.apiKey.value.trim());
+  });
 
   function showError(msg){
     els.errorMsg.textContent = msg;
@@ -409,14 +429,25 @@ End every response on a new line with exactly:
   }
 
   async function callDJ(vibeText, avoidList){
+    const apiKey = els.apiKey.value.trim();
+    if (!apiKey){
+      els.settingsPanel.classList.add('open');
+      throw new Error('Add your Anthropic API key above first (⚙ in the top right).');
+    }
+
     let userContent = vibeText;
     if (avoidList && avoidList.length){
       userContent += `\n\n(Re-roll: pick a different song than these previous picks — ${avoidList.join('; ')}.)`;
     }
 
-    const response = await fetch('/api/chat', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1000,
